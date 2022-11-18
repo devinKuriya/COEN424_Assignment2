@@ -64,7 +64,11 @@ database_collection=dbname[collection_name]
 
 linestart=(int(BatchUnit)*(int(BatchID)-1))
 lineend=(int(BatchUnit)*(int(BatchSize)))
+
 pipeline=[
+    {
+        "$match":{"benchmarktype":BenchmarkType,"datatype":DataType}
+    },
     {
         "$skip":linestart#skip number of rows you want
     },
@@ -73,11 +77,30 @@ pipeline=[
     },
     {
         "$group":{
-            "_id":WorkloadMetric,"total_quantity":{"$sum":"$"+WorkloadMetric},"max":{"$max":"$"+WorkloadMetric},"min":{"$min":"$"+WorkloadMetric},"standard deviation":{"$stdDevSamp":"$"+WorkloadMetric}
+            "_id":WorkloadMetric,"average":{"$avg":"$"+WorkloadMetric},"max":{"$max":"$"+WorkloadMetric},"min":{"$min":"$"+WorkloadMetric}
         }
     }
 
 ]
+# pipeline_sorted=[
+#     {
+#         "$skip":linestart#skip number of rows you want
+#     },
+#     {
+#          "$limit":lineend#limt of data points
+#     },
+#     {
+#         "$group":{
+#             "_id":WorkloadMetric,"median":{"$sum":"$"+WorkloadMetric},"standard deviation":{"$stdDevSamp":"$"+WorkloadMetric}
+#         }
+#     },
+#     { "$sort": { f"${WorkloadMetric}": 1 } }
+
+# ]
 run=database_collection.aggregate(pipeline)
 for entries in run:
     print(entries)
+
+# run2=database_collection.aggregate(pipeline_sorted)
+# for entries in run2:
+#    print(entries)
