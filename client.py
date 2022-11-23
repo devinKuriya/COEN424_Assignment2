@@ -76,10 +76,10 @@ DataType=input('Please input a DataType(training or testing): \n')
 collection_name=BenchmarkType+"-"+DataType
 database_collection=dbname[collection_name]
 
-
 linestart=(int(BatchUnit)*(int(BatchID)-1))
 lineend=(int(BatchUnit)*(int(BatchSize)))
-
+print(linestart)
+print(lineend)
 pipeline=[
     {
         "$match":{"benchmarktype":BenchmarkType,"datatype":DataType}
@@ -97,27 +97,6 @@ pipeline=[
     }
 
 ]
-# pipeline_sorted=[
-#     {
-#         "$skip":linestart#skip number of rows you want
-#     },
-#     {
-#          "$limit":lineend#limt of data points
-#     },
-#     {
-#         "$group":{
-#             "_id":WorkloadMetric,"median":{"$sum":"$"+WorkloadMetric},"standard deviation":{"$stdDevSamp":"$"+WorkloadMetric}
-#         }
-#     },
-#     { "$sort": { f"${WorkloadMetric}": 1 } }
-
-# ]
-
-
 run=database_collection.aggregate(pipeline)
 for entries in run:
     print(entries)
-
-# run2=database_collection.aggregate(pipeline_sorted)
-# for entries in run2:
-#    print(entries)
