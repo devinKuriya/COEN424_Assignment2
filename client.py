@@ -93,9 +93,166 @@ pipeline=[
     },
     {
         "$group":{
-            "_id":WorkloadMetric,"average":{"$avg":"$"+WorkloadMetric},"max":{"$max":"$"+WorkloadMetric},"min":{"$min":"$"+WorkloadMetric,"std":{"$stdDevSamp":"$"+WorkloadMetric}}
+            "_id":WorkloadMetric,
+            "average":{"$avg":"$"+WorkloadMetric},
+            "max":{"$max":"$"+WorkloadMetric},
+            "min":{"$min":"$"+WorkloadMetric},
+            "std":{"$stdDevSamp":"$"+WorkloadMetric},
+            "valueArray": {"$push": "$"+WorkloadMetric }
+        }
+    },
+    
+    {
+    "$project": {
+    "max":1,
+    "min":1,
+    "std":1,
+    "average":1,
+    "valueArray": 1,
+    "size": { "$size": [ "$valueArray" ] }
+                }
+    },
+    {
+    "$project": {
+         "max":1,
+    "min":1,
+    "std":1,
+    "average":1,
+        "valueArray": 1,
+        "remainder":{
+            "$mod":["$size",2]
         }
     }
+    },
+    {
+        "$project": {
+             "max":1,
+    "min":1,
+    "std":1,
+    "average":1,
+        "valueArray": 1,
+        "len":{
+            "$cond":{"if":{"$eq":["$remainder",0]},"then":0, "else":1}
+        }
+    }
+    },
+    {
+       "$project": {
+        "max":1,
+    "min":1,
+    "std":1,
+    "average":1,
+        "valueArray": 1,
+        "len":1,
+        "size":1,
+        "middle":{"$subtract":["$size",1]}
+    }
+    },
+    {
+       "$project": {
+        "middle":1,
+        "max":1,
+    "min":1,
+    "std":1,
+    "average":1,
+        "valueArray": 1,
+        "len":1,
+        "size":1,
+        "middle_item_index":{"$trunc":{"$divide":["$middle",2]}}
+    }
+    },
+    {
+       "$project": {
+        "max":1,
+    "min":1,
+    "std":1,
+    "average":1,
+        "valueArray": 1,
+        "len":1,
+        "size":1,
+        "middle_item_index":1
+        "middle":1,
+        "middle_of_array":{"$arrayElemAt":["$valueArray","$middle_item_index"]}
+    }},
+    {
+       "$project": {
+        "max":1,
+    "min":1,
+    "std":1,
+    "average":1,
+        "valueArray": 1,
+        "len":1,
+        "size":1,
+        "seconditem":{"$add":["$middle_item_index",1]}
+    }
+    },
+    {
+       "$project": {
+       "max":1,
+    "min":1,
+    "std":1,
+    "average":1,
+        "valueArray": 1,
+        "seconditem":1,
+        "len":1,
+        "size":1,
+         "middle_of_array2":{"$arrayElemAt":["$valuearray","$seconditem"]}
+    }
+    },
+    # {
+    #    "$project": {
+    #     "max":1,
+    # "min":1,
+    # "std":1,
+    # "average":1,
+    #     "valueArray": 1,
+    #     "len":1,
+    #     "size":1,
+    #     "$evenarraymiddlepointadded":{"$add":["$middle_of_array","$middle_of_array2"]}
+    # }
+    # },
+    # {
+    #    "$project": {
+    #     "max":1,
+    # "min":1,
+    # "std":1,
+    # "average":1,
+    #     "valueArray": 1,
+    #     "len":1,
+    #     "size":1,
+    #      "evenMedianValue":{"$divide":{"$evenarraymiddlepointadded",2}}
+    # }
+    # },
+    # {
+    #    "$project": {
+    #     "max":1,
+    # "min":1,
+    # "std":1,
+    # "average":1,
+    #     "valueArray": 1,
+    #     "len":1,
+    #     "size":1,
+    #     "median":{
+    #         "$cond":{
+    #             "if":{"$eq":["$len",0]},
+    #             "then":"$evenMedianValue",
+    #             "else":"$middle_of_array"
+    #         }
+    #     }
+    # }
+    # },
+    # {
+    #    "$project": {
+    #     "median":1,
+    #     "max":1,
+    # "min":1,
+    # "std":1,
+    # "average":1,
+    # }
+    # }
+    
+
+
 ]
 run=database_collection.aggregate(pipeline)
 for entries in run:
