@@ -81,6 +81,7 @@ lineend=(int(BatchUnit)*(int(BatchSize)))
 print(linestart)
 print(lineend)
 pipeline=[
+    { "$sort": { "value": 1 } },
     {
         "$match":{"benchmarktype":BenchmarkType,"datatype":DataType}
     },
@@ -92,10 +93,9 @@ pipeline=[
     },
     {
         "$group":{
-            "_id":WorkloadMetric,"average":{"$avg":"$"+WorkloadMetric},"max":{"$max":"$"+WorkloadMetric},"min":{"$min":"$"+WorkloadMetric}
+            "_id":WorkloadMetric,"average":{"$avg":"$"+WorkloadMetric},"max":{"$max":"$"+WorkloadMetric},"min":{"$min":"$"+WorkloadMetric,"std":{"$stdDevSamp":"$"+WorkloadMetric}}
         }
     }
-
 ]
 run=database_collection.aggregate(pipeline)
 for entries in run:
