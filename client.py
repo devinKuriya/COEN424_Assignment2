@@ -64,7 +64,7 @@ total=dbname["FullDataSet"]
 #collection.delete_many({})
 
 
-# #Get user input
+#Get user input
 id=input('Please input an ID(if you wish to close client click enter): \n')
 BenchmarkType=input('Please input a BenchmarkType(DVD or NDB): \n')
 WorkloadMetric=input('Please input a WorkloadMetric: \n')
@@ -73,15 +73,14 @@ BatchID=input('Please input a BatchID: \n')
 BatchSize=input('Please input a BatchSize: \n')
 DataType=input('Please input a DataType(training or testing): \n')
 
-collection_name=BenchmarkType+"-"+DataType
-database_collection=dbname[collection_name]
+#collection_name=BenchmarkType+"-"+DataType
+database_collection=dbname["FullDataSet"]
 
 linestart=(int(BatchUnit)*(int(BatchID)-1))
 lineend=(int(BatchUnit)*(int(BatchSize)))
 print(linestart)
 print(lineend)
 pipeline=[
-    { "$sort": { "value": 1 } },
     {
         "$match":{"benchmarktype":BenchmarkType,"datatype":DataType}
     },
@@ -91,6 +90,7 @@ pipeline=[
     {
          "$limit":lineend#limt of data points
     },
+    { "$sort": { WorkloadMetric: 1 } },
     {
         "$group":{
             "_id":WorkloadMetric,
@@ -101,7 +101,7 @@ pipeline=[
             "valueArray": {"$push": "$"+WorkloadMetric }
         }
     },
-    
+
     {
     "$project": {
     "max":1,
@@ -109,27 +109,30 @@ pipeline=[
     "std":1,
     "average":1,
     "valueArray": 1,
-    "size": { "$size": [ "$valueArray" ] }
+    "size1": { "$size": [ "$valueArray" ] }
                 }
     },
     {
     "$project": {
-         "max":1,
+    "max":1,
     "min":1,
     "std":1,
     "average":1,
+    "size1":1,
         "valueArray": 1,
         "remainder":{
-            "$mod":["$size",2]
+            "$mod":["$size1",2]
         }
     }
     },
     {
-        "$project": {
-             "max":1,
-    "min":1,
-    "std":1,
-    "average":1,
+     "$project": {
+        "remainder":1,
+        "max":1,
+        "min":1,
+        "std":1,
+        "size1":1,
+        "average":1,
         "valueArray": 1,
         "len":{
             "$cond":{"if":{"$eq":["$remainder",0]},"then":0, "else":1}
@@ -137,27 +140,27 @@ pipeline=[
     }
     },
     {
-       "$project": {
-        "max":1,
+    "$project": {
+    "max":1,
     "min":1,
     "std":1,
     "average":1,
         "valueArray": 1,
         "len":1,
-        "size":1,
-        "middle":{"$subtract":["$size",1]}
+        "size1":1,
+        "middle":{"$subtract":["$size1",1]}
     }
     },
     {
        "$project": {
-        "middle":1,
-        "max":1,
+    "middle":1,
+    "max":1,
     "min":1,
     "std":1,
     "average":1,
         "valueArray": 1,
         "len":1,
-        "size":1,
+        "size1":1,
         "middle_item_index":{"$trunc":{"$divide":["$middle",2]}}
     }
     },
@@ -169,25 +172,29 @@ pipeline=[
     "average":1,
         "valueArray": 1,
         "len":1,
-        "size":1,
-        "middle_item_index":1
+        "size1":1,
+        "middle_item_index":1,
         "middle":1,
         "middle_of_array":{"$arrayElemAt":["$valueArray","$middle_item_index"]}
     }},
     {
        "$project": {
+        "middle_of_array":1,
+        "middle_item_index":1,
         "max":1,
     "min":1,
     "std":1,
     "average":1,
         "valueArray": 1,
         "len":1,
-        "size":1,
+        "size1":1,
         "seconditem":{"$add":["$middle_item_index",1]}
     }
     },
     {
        "$project": {
+        "middle_of_array":1,
+        "middle_item_index":1,
        "max":1,
     "min":1,
     "std":1,
@@ -195,61 +202,71 @@ pipeline=[
         "valueArray": 1,
         "seconditem":1,
         "len":1,
-        "size":1,
-         "middle_of_array2":{"$arrayElemAt":["$valuearray","$seconditem"]}
+        "size1":1,
+         "middle_of_array2":{"$arrayElemAt":["$valueArray","$seconditem"]}
     }
     },
-    # {
-    #    "$project": {
-    #     "max":1,
-    # "min":1,
-    # "std":1,
-    # "average":1,
-    #     "valueArray": 1,
-    #     "len":1,
-    #     "size":1,
-    #     "$evenarraymiddlepointadded":{"$add":["$middle_of_array","$middle_of_array2"]}
-    # }
-    # },
-    # {
-    #    "$project": {
-    #     "max":1,
-    # "min":1,
-    # "std":1,
-    # "average":1,
-    #     "valueArray": 1,
-    #     "len":1,
-    #     "size":1,
-    #      "evenMedianValue":{"$divide":{"$evenarraymiddlepointadded",2}}
-    # }
-    # },
-    # {
-    #    "$project": {
-    #     "max":1,
-    # "min":1,
-    # "std":1,
-    # "average":1,
-    #     "valueArray": 1,
-    #     "len":1,
-    #     "size":1,
-    #     "median":{
-    #         "$cond":{
-    #             "if":{"$eq":["$len",0]},
-    #             "then":"$evenMedianValue",
-    #             "else":"$middle_of_array"
-    #         }
-    #     }
-    # }
-    # },
-    # {
-    #    "$project": {
-    #     "median":1,
-    #     "max":1,
-    # "min":1,
-    # "std":1,
-    # "average":1,
-    # }
-    # }
+    {
+       "$project": {
+        "middle_of_array":1,
+        "middle_of_array2":1,
+        "max":1,
+    "min":1,
+    "std":1,
+    "average":1,
+        "valueArray": 1,
+        "len":1,
+        "size":1,
+        "evenarraymiddlepointadded":{"$add":["$middle_of_array","$middle_of_array2"]}
+    }
+    },
+    {
+       "$project": {
+    "evenarraymiddlepointadded":1,
+    "middle_of_array":1,
+    "middle_of_array2":1,
+    "max":1,
+    "min":1,
+    "std":1,
+    "average":1,
+        "valueArray": 1,
+        "len":1,
+        "size":1,
+         "evenMedianValue":{"$divide":["$evenarraymiddlepointadded",2]}
+    }
+    },
+    {
+       "$project": {
+        "evenMedianValue":1,
+         "middle_of_array":1,
+        "middle_of_array2":1,
+        "len":1,
+        "max":1,
+    "min":1,
+    "std":1,
+    "average":1,
+        "valueArray": 1,
+        "len":1,
+        "size":1,
+        "median":{
+            "$cond":{
+                "if":{"$eq":["$len",0]},
+                "then":"$evenMedianValue",
+                "else":"$middle_of_array"
+            }
+        }
+    }
+    },
+    {
+       "$project": {
+        # "valueArray": 1,
+        "median":1,
+        "max":1,
+        "min":1,
+        "std":1,
+        "average":1,
+    }
+    }
     
 
 
