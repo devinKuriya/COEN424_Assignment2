@@ -76,13 +76,16 @@ DataType=input('Please input a DataType(training or testing): \n')
 #collection_name=BenchmarkType+"-"+DataType
 database_collection=dbname["FullDataSet"]
 
+#Calculate start and end lines
 linestart=(int(BatchUnit)*(int(BatchID)-1))
 lineend=(int(BatchUnit)*(int(BatchSize)))
-print(linestart)
-print(lineend)
+# print(linestart)#used for testing
+# print(lineend)#used for testing
+
+#Create pipeline to caclualte analytics
 pipeline=[
     {
-        "$match":{"benchmarktype":BenchmarkType,"datatype":DataType}
+        "$match":{"benchmarktype":BenchmarkType,"datatype":DataType}#Match datatype and benchmark type
     },
     {
         "$skip":linestart#skip number of rows you want
@@ -90,41 +93,43 @@ pipeline=[
     {
          "$limit":lineend#limt of data points
     },
-    { "$sort": { WorkloadMetric: 1 } },
+    { "$sort": { WorkloadMetric: 1 } },#Sort the data
     {
+        #Calculate avg, max, min and std.
         "$group":{
             "_id":WorkloadMetric,
             "average":{"$avg":"$"+WorkloadMetric},
             "max":{"$max":"$"+WorkloadMetric},
             "min":{"$min":"$"+WorkloadMetric},
             "std":{"$stdDevSamp":"$"+WorkloadMetric},
-            "valueArray": {"$push": "$"+WorkloadMetric }
+            "valueArray": {"$push": "$"+WorkloadMetric }#Save values to an array
         }
     },
-
+    #Start Median calculatipons
+    #Find size of array
     {
     "$project": {
-    "max":1,
-    "min":1,
-    "std":1,
-    "average":1,
-    "valueArray": 1,
-    "size1": { "$size": [ "$valueArray" ] }
-                }
-    },
-    {
-    "$project": {
-    "max":1,
-    "min":1,
-    "std":1,
-    "average":1,
-    "size1":1,
+        "max":1,
+        "min":1,
+        "std":1,
+        "average":1,
         "valueArray": 1,
-        "remainder":{
-            "$mod":["$size1",2]
-        }
+        "size1": { "$size": [ "$valueArray" ] }
     }
     },
+    #Finding if array has even or odd number of values
+    {
+    "$project": {
+        "max":1,
+        "min":1,
+        "std":1,
+        "average":1,
+        "size1":1,
+        "valueArray": 1,
+        "remainder":{"$mod":["$size1",2]}
+    }
+    },
+    #Finding if array has even or odd number of values
     {
      "$project": {
         "remainder":1,
@@ -134,42 +139,43 @@ pipeline=[
         "size1":1,
         "average":1,
         "valueArray": 1,
-        "len":{
-            "$cond":{"if":{"$eq":["$remainder",0]},"then":0, "else":1}
-        }
+        "len":{"$cond":{"if":{"$eq":["$remainder",0]},"then":0, "else":1}}
     }
     },
+    #Find size -1 since index starts at 0
     {
     "$project": {
-    "max":1,
-    "min":1,
-    "std":1,
-    "average":1,
-        "valueArray": 1,
-        "len":1,
-        "size1":1,
-        "middle":{"$subtract":["$size1",1]}
-    }
-    },
-    {
-       "$project": {
-    "middle":1,
-    "max":1,
-    "min":1,
-    "std":1,
-    "average":1,
-        "valueArray": 1,
-        "len":1,
-        "size1":1,
-        "middle_item_index":{"$trunc":{"$divide":["$middle",2]}}
-    }
-    },
-    {
-       "$project": {
         "max":1,
-    "min":1,
-    "std":1,
-    "average":1,
+        "min":1,
+        "std":1,
+        "average":1,
+        "valueArray": 1,
+        "len":1,
+        "size1":1,
+        "fixedlength":{"$subtract":["$size1",1]}
+    }
+    },
+    #Find the middle index
+    {
+    "$project": {
+        "fixedlength":1,
+        "max":1,
+        "min":1,
+        "std":1,
+        "average":1,
+        "valueArray": 1,
+        "len":1,
+        "size1":1,
+        "middle_item_index":{"$trunc":{"$divide":["$fixedlength",2]}}
+    }
+    },
+    #Find value at middle or left middle
+    {
+    "$project": {
+        "max":1,
+        "min":1,
+        "std":1,
+        "average":1,
         "valueArray": 1,
         "len":1,
         "size1":1,
@@ -177,28 +183,30 @@ pipeline=[
         "middle":1,
         "middle_of_array":{"$arrayElemAt":["$valueArray","$middle_item_index"]}
     }},
+    #Find the item index 1 to the right
     {
-       "$project": {
+    "$project": {
         "middle_of_array":1,
         "middle_item_index":1,
         "max":1,
-    "min":1,
-    "std":1,
-    "average":1,
+        "min":1,
+        "std":1,
+        "average":1,
         "valueArray": 1,
         "len":1,
         "size1":1,
         "seconditem":{"$add":["$middle_item_index",1]}
     }
     },
+    #Find the item value 1 to the right
     {
        "$project": {
         "middle_of_array":1,
         "middle_item_index":1,
-       "max":1,
-    "min":1,
-    "std":1,
-    "average":1,
+        "max":1,
+        "min":1,
+        "std":1,
+        "average":1,
         "valueArray": 1,
         "seconditem":1,
         "len":1,
@@ -206,59 +214,57 @@ pipeline=[
          "middle_of_array2":{"$arrayElemAt":["$valueArray","$seconditem"]}
     }
     },
+    #If length=even, we need to add the 2 middle items to later divide by 2
     {
-       "$project": {
+    "$project": {
         "middle_of_array":1,
         "middle_of_array2":1,
         "max":1,
-    "min":1,
-    "std":1,
-    "average":1,
+        "min":1,
+        "std":1,
+        "average":1,
         "valueArray": 1,
         "len":1,
         "size":1,
         "evenarraymiddlepointadded":{"$add":["$middle_of_array","$middle_of_array2"]}
     }
     },
+    #Divide by 2
     {
-       "$project": {
-    "evenarraymiddlepointadded":1,
-    "middle_of_array":1,
-    "middle_of_array2":1,
-    "max":1,
-    "min":1,
-    "std":1,
-    "average":1,
+    "$project": {
+        "evenarraymiddlepointadded":1,
+        "middle_of_array":1,
+        "middle_of_array2":1,
+        "max":1,
+        "min":1,
+        "std":1,
+        "average":1,
         "valueArray": 1,
         "len":1,
         "size":1,
          "evenMedianValue":{"$divide":["$evenarraymiddlepointadded",2]}
     }
     },
+    #Calculate and set median value
     {
-       "$project": {
+    "$project": {
         "evenMedianValue":1,
-         "middle_of_array":1,
+        "middle_of_array":1,
         "middle_of_array2":1,
         "len":1,
         "max":1,
-    "min":1,
-    "std":1,
-    "average":1,
+        "min":1,
+        "std":1,
+        "average":1,
         "valueArray": 1,
         "len":1,
         "size":1,
-        "median":{
-            "$cond":{
-                "if":{"$eq":["$len",0]},
-                "then":"$evenMedianValue",
-                "else":"$middle_of_array"
-            }
-        }
+        "median":{"$cond":{ "if":{"$eq":["$len",0]},"then":"$evenMedianValue","else":"$middle_of_array"}}
     }
     },
+    #All needed values 
     {
-       "$project": {
+    "$project": {
         # "valueArray": 1,
         "median":1,
         "max":1,
@@ -271,6 +277,7 @@ pipeline=[
 
 
 ]
+#Run aggregation
 run=database_collection.aggregate(pipeline)
 for entries in run:
     print(entries)
