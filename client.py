@@ -41,11 +41,11 @@ def allcollections(collectionname,total):
 
 dbname= setupdb()
 #Set Collections
-dvd_test=dbname["DVD-testing"]
-dvd_training=dbname["DVD-training"]
-NDB_test=dbname["NDB-testing"]
-NDB_training=dbname["NDB-training"]
-total=dbname["FullDataSet"]
+# dvd_test=dbname["DVD-testing"]
+# dvd_training=dbname["DVD-training"]
+# NDB_test=dbname["NDB-testing"]
+# NDB_training=dbname["NDB-training"]
+# total=dbname["FullDataSet"]
 
 #Used to update datasets with attributs to implemeent match
 # updatecollection("DVD-testing","DVD","testing")
@@ -265,7 +265,7 @@ pipeline=[
     #All needed values 
     {
     "$project": {
-        # "valueArray": 1,
+        "valueArray": 1,
         "median":1,
         "max":1,
         "min":1,
@@ -278,3 +278,4 @@ pipeline=[
 run=database_collection.aggregate(pipeline)
 for entries in run:
     print(entries)
+#database_collection.aggregate(pipeline).explain("exectionStats")
