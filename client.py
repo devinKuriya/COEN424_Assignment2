@@ -17,13 +17,13 @@ def setcollections():
     payloaddatadvd_training = json.loads(datadvd_training_json)
     dvd_training.insert_many(payloaddatadvd_training)
 
-    # datandb_testing_json=dataNDB_testt.to_json(orient='records')
-    # payloaddatandb_testing_json = json.loads(datandb_testing_json)
-    # NDB_test.insert_many(payloaddatandb_testing_json)
+    datandb_testing_json=dataNDB_testt.to_json(orient='records')
+    payloaddatandb_testing_json = json.loads(datandb_testing_json)
+    NDB_test.insert_many(payloaddatandb_testing_json)
 
-    # datandb_training_json=dataNDB_training.to_json(orient='records')
-    # payloaddatandb_training_json = json.loads(datandb_training_json)
-    # NDB_training.insert_many(payloaddatandb_training_json)
+    datandb_training_json=dataNDB_training.to_json(orient='records')
+    payloaddatandb_training_json = json.loads(datandb_training_json)
+    NDB_training.insert_many(payloaddatandb_training_json)
 
 def updatecollection(collectionname,benchmarktype,datatype):
     dbname[collectionname].update_many({},
@@ -83,7 +83,7 @@ lineend=(int(BatchUnit)*(int(BatchSize)))
 # print(lineend)#used for testing
 
 #Create pipeline to caclualte analytics
-pipeline=[
+pipeline1=[
     {
         "$match":{"benchmarktype":BenchmarkType,"datatype":DataType}#Match datatype and benchmark type
     },
@@ -265,7 +265,7 @@ pipeline=[
     #All needed values 
     {
     "$project": {
-        "valueArray": 1,
+        #"valueArray": 1,
         "median":1,
         "max":1,
         "min":1,
@@ -275,7 +275,18 @@ pipeline=[
     }
 ]
 #Run aggregation
-run=database_collection.aggregate(pipeline)
+run=database_collection.aggregate(pipeline1)
+
 for entries in run:
     print(entries)
-#database_collection.aggregate(pipeline).explain("exectionStats")
+#run=dbname.command('aggregate', 'FullDataSet', pipeline=pipeline1, explain=False)
+# test=dbname.command(
+#     'explain', 
+#     {
+#         'aggregate': "FullDataSet", 
+#         'pipeline': pipeline1, 
+#         'cursor': {}
+#     }, 
+#     verbosity='queryPlanner'
+# )
+# print(test)
