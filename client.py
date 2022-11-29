@@ -273,9 +273,6 @@ pipeline=[
         "average":1,
     }
     }
-    
-
-
 ]
 #Run aggregation
 run=database_collection.aggregate(pipeline)
