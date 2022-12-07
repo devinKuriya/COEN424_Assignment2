@@ -1,3 +1,8 @@
+#Devin Kuriya
+#40111954
+#Dec 7, 2022
+
+
 import json
 from dbconnect import setupdb
 import pandas as ps
@@ -38,7 +43,7 @@ def allcollections(collectionname,total):
         dbname[total].insert_one(i)
 
 
-
+#From MongoDB documentation
 dbname= setupdb()
 #Set Collections
 # dvd_test=dbname["DVD-testing"]
@@ -274,19 +279,9 @@ pipeline1=[
     }
     }
 ]
-#Run aggregation
-run=database_collection.aggregate(pipeline1)
 
+run=database_collection.aggregate(pipeline1)
+test=dbname.command('explain', {'aggregate': "FullDataSet", 'pipeline': pipeline1,'cursor': {}}, verbosity='executionStats')
+#print(test)
 for entries in run:
     print(entries)
-#run=dbname.command('aggregate', 'FullDataSet', pipeline=pipeline1, explain=False)
-# test=dbname.command(
-#     'explain', 
-#     {
-#         'aggregate': "FullDataSet", 
-#         'pipeline': pipeline1, 
-#         'cursor': {}
-#     }, 
-#     verbosity='queryPlanner'
-# )
-# print(test)
